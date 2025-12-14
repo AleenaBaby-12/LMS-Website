@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopHeader from '../components/TopHeader';
 import api from '../services/api';
-import { Plus, Trash2, Users, BookOpen, Clock, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, Users, BookOpen, Clock, TrendingUp, PlusCircle, FileText } from 'lucide-react';
 import {
     LineChart,
     Line,
@@ -156,9 +156,14 @@ const TeacherDashboard = () => {
                             </div>
                         ))}
                     </div>
-                    <Link to="/create-course" className="btn btn-primary w-full mt-6 justify-center">
-                        <Plus size={18} /> Add New Course
-                    </Link>
+                    <div className="flex flex-col gap-2 mt-6">
+                        <Link to="/create-course" className="btn btn-primary w-full justify-center">
+                            <Plus size={18} /> Add New Course
+                        </Link>
+                        <Link to="/create-assignment" className="btn btn-outline w-full justify-center">
+                            <FileText size={18} /> Add New Assignment
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

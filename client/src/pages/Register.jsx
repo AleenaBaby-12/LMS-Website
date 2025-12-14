@@ -83,50 +83,50 @@ const Register = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-                <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+            <div className="max-w-2xl mx-auto">
+                <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
                     {/* Header */}
-                    <div className="text-center mb-10">
-                        <h2 className="text-4xl font-bold text-gray-900 mb-3">Create Account</h2>
-                        <p className="text-gray-600 text-lg">Join our learning community today</p>
+                    <div className="text-center mb-6">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
+                        <p className="text-gray-600">Join our learning community today</p>
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-8 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                            <p className="text-red-700 font-medium">{error}</p>
+                        <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                            <p className="text-red-700 text-sm font-medium">{error}</p>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Role Selection */}
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
-                            <label className="block text-sm font-semibold text-gray-800 mb-3">I am a:</label>
-                            <select
-                                className="input w-full text-lg"
-                                value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                            >
-                                <option value="student">Student</option>
-                                <option value="teacher">Instructor</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Role Selection & Profile Pic Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Role Selection */}
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                                <label className="block text-sm font-semibold text-gray-800 mb-2">I am a:</label>
+                                <select
+                                    className="input w-full text-base py-2"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                >
+                                    <option value="student">Student</option>
+                                    <option value="teacher">Instructor</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
 
-                        {/* Profile Picture Upload */}
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <label className="block text-sm font-semibold text-gray-800 mb-4">Profile Picture (Optional)</label>
-                            <div className="flex items-center gap-6">
-                                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                            {/* Profile Picture Upload */}
+                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center gap-4">
+                                <div className="w-16 h-16 shrink-0 rounded-full bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-md">
                                     {imagePreview ? (
                                         <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                                     ) : (
-                                        <User size={48} className="text-blue-400" />
+                                        <User size={32} className="text-blue-400" />
                                     )}
                                 </div>
-                                <label className="btn btn-outline cursor-pointer flex items-center gap-2 px-6 py-3 text-base">
-                                    <Upload size={20} />
-                                    {uploading ? 'Uploading...' : 'Upload Photo'}
+                                <label className="btn btn-outline btn-sm cursor-pointer flex items-center gap-2 px-4 py-2 text-sm w-full justification-center">
+                                    <Upload size={16} />
+                                    <span className="truncate">{uploading ? '...' : 'Upload Photo'}</span>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -139,33 +139,33 @@ const Register = () => {
                         </div>
 
                         {/* Basic Information Section */}
-                        <div className="space-y-6">
-                            <div className="border-b border-gray-200 pb-2">
-                                <h3 className="text-xl font-bold text-gray-900">Basic Information</h3>
+                        <div className="space-y-4">
+                            <div className="border-b border-gray-200 pb-1">
+                                <h3 className="text-lg font-bold text-gray-900">Basic Info</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
                                         Full Name <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         placeholder="John Doe"
-                                        className="input w-full"
+                                        className="input w-full py-2"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
                                         Email <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="email"
                                         placeholder="john@example.com"
-                                        className="input w-full"
+                                        className="input w-full py-2"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -173,142 +173,142 @@ const Register = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
                                         Password <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="password"
                                         placeholder="••••••••"
-                                        className="input w-full"
+                                        className="input w-full py-2"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         minLength="6"
                                     />
-                                    <p className="text-xs text-gray-500 mt-2">Minimum 6 characters</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">Phone</label>
                                     <input
                                         type="tel"
                                         placeholder="+1 234 567 8900"
-                                        className="input w-full"
+                                        className="input w-full py-2"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Country</label>
-                                <input
-                                    type="text"
-                                    placeholder="United States"
-                                    className="input w-full"
-                                    value={country}
-                                    onChange={(e) => setCountry(e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Bio {role === 'teacher' && <span className="text-red-500">*</span>}
-                                </label>
-                                <textarea
-                                    placeholder={role === 'teacher' ? "Tell students about your expertise and teaching experience..." : "Tell us about yourself..."}
-                                    className="input w-full resize-none"
-                                    rows="4"
-                                    value={bio}
-                                    onChange={(e) => setBio(e.target.value)}
-                                    maxLength="500"
-                                    required={role === 'teacher'}
-                                />
-                                <p className="text-xs text-gray-500 mt-2">{bio.length}/500 characters</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">Country</label>
+                                    <input
+                                        type="text"
+                                        placeholder="United States"
+                                        className="input w-full py-2"
+                                        value={country}
+                                        onChange={(e) => setCountry(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                        Bio {role === 'teacher' && <span className="text-red-500">*</span>}
+                                    </label>
+                                    <textarea
+                                        placeholder={role === 'teacher' ? "Teaching exp..." : "About you..."}
+                                        className="input w-full resize-none py-1 min-h-[42px]"
+                                        rows="1"
+                                        value={bio}
+                                        onChange={(e) => setBio(e.target.value)}
+                                        maxLength="500"
+                                        required={role === 'teacher'}
+                                        style={{ height: '42px' }}
+                                    />
+                                </div>
                             </div>
                         </div>
 
                         {/* Instructor-Specific Fields */}
                         {role === 'teacher' && (
-                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-8 rounded-xl border border-purple-200 space-y-6">
-                                <div className="border-b border-purple-200 pb-2">
-                                    <h3 className="text-xl font-bold text-gray-900">Instructor Information</h3>
+                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-lg border border-purple-200 space-y-4">
+                                <div className="border-b border-purple-200 pb-1">
+                                    <h3 className="text-lg font-bold text-gray-900">Instructor Details</h3>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Professional Title</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Title</label>
                                         <input
                                             type="text"
-                                            placeholder="e.g., Professor, Senior Developer"
-                                            className="input w-full"
+                                            placeholder="e.g. Professor"
+                                            className="input w-full py-2"
                                             value={professionalTitle}
                                             onChange={(e) => setProfessionalTitle(e.target.value)}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Organization</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Organization</label>
                                         <input
                                             type="text"
-                                            placeholder="e.g., University, Company"
-                                            className="input w-full"
+                                            placeholder="University/Company"
+                                            className="input w-full py-2"
                                             value={organization}
                                             onChange={(e) => setOrganization(e.target.value)}
                                         />
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Qualifications</label>
-                                    <textarea
-                                        placeholder="Degrees, certifications, achievements..."
-                                        className="input w-full resize-none"
-                                        rows="3"
-                                        value={qualifications}
-                                        onChange={(e) => setQualifications(e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Website</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Website</label>
                                         <input
                                             type="url"
-                                            placeholder="https://yourwebsite.com"
-                                            className="input w-full"
+                                            placeholder="https://site.com"
+                                            className="input w-full py-2"
                                             value={website}
                                             onChange={(e) => setWebsite(e.target.value)}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">LinkedIn</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">LinkedIn</label>
                                         <input
                                             type="url"
-                                            placeholder="https://linkedin.com/in/yourprofile"
-                                            className="input w-full"
+                                            placeholder="https://linkedin.com/..."
+                                            className="input w-full py-2"
                                             value={linkedIn}
                                             onChange={(e) => setLinkedIn(e.target.value)}
                                         />
                                     </div>
                                 </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">Qualifications</label>
+                                    <textarea
+                                        placeholder="Degrees, certifications..."
+                                        className="input w-full resize-none py-1"
+                                        rows="2"
+                                        value={qualifications}
+                                        onChange={(e) => setQualifications(e.target.value)}
+                                    />
+                                </div>
                             </div>
                         )}
 
                         {/* Submit Button */}
-                        <div className="pt-4">
+                        <div className="pt-2">
                             <button
                                 type="submit"
-                                className="btn btn-primary w-full py-4 text-lg font-semibold"
+                                className="btn btn-primary w-full py-3 text-base font-semibold shadow-md hover:shadow-lg transition-all"
                                 disabled={uploading}
                             >
-                                {uploading ? 'Uploading Image...' : 'Create Account'}
+                                {uploading ? 'Uploading...' : 'Create Account'}
                             </button>
                         </div>
 
                         {/* Login Link */}
-                        <div className="text-center pt-4 border-t border-gray-200">
-                            <p className="text-gray-600">
+                        <div className="text-center pt-3 border-t border-gray-200">
+                            <p className="text-sm text-gray-600">
                                 Already have an account?{' '}
                                 <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold hover:underline">
                                     Sign in

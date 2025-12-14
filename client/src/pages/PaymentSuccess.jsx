@@ -18,7 +18,7 @@ const PaymentSuccess = () => {
 
         const verify = async () => {
             try {
-                await api.post('/payment/verify-payment', { sessionId, courseId });
+                await api.post('/payments/verify-payment', { sessionId, courseId });
                 setStatus('success');
                 // Optional: Redirect after delay
                 // setTimeout(() => navigate(`/courses/${courseId}`), 3000);

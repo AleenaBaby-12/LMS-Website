@@ -9,6 +9,10 @@ import CourseDetail from './pages/CourseDetail';
 import Dashboard from './pages/Dashboard';
 import MyCourses from './pages/MyCourses';
 import Progress from './pages/Progress';
+import Assignments from './pages/Assignments';
+import CreateAssignment from './pages/CreateAssignment';
+import AssignmentDetails from './pages/AssignmentDetails';
+import AssignmentSubmissions from './pages/AssignmentSubmissions';
 import PaymentSuccess from './pages/PaymentSuccess';
 import { useAuth } from './context/AuthContext';
 
@@ -51,6 +55,31 @@ function App() {
         <Route path="/progress" element={
           <PrivateRoute>
             <Progress />
+          </PrivateRoute>
+        } />
+        <Route path="/assignments" element={
+          <PrivateRoute>
+            <Assignments />
+          </PrivateRoute>
+        } />
+        <Route path="/assignments/:id" element={
+          <PrivateRoute>
+            <AssignmentDetails />
+          </PrivateRoute>
+        } />
+        <Route path="/assignments/:id/submissions" element={
+          <PrivateRoute>
+            <AssignmentSubmissions />
+          </PrivateRoute>
+        } />
+        <Route path="/create-assignment" element={
+          <PrivateRoute>
+            <CreateAssignment />
+          </PrivateRoute>
+        } />
+        <Route path="/assignments/edit/:id" element={
+          <PrivateRoute>
+            <CreateAssignment />
           </PrivateRoute>
         } />
         <Route path="/payment-success" element={<PaymentSuccess />} />

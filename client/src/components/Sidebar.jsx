@@ -18,6 +18,7 @@ const Sidebar = () => {
         { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { path: '/my-courses', label: 'My Courses', icon: BookOpen },
         { path: '/students', label: 'Students', icon: Users },
+        { path: '/assignments', label: 'Assignments', icon: FileText },
         { path: '/analytics', label: 'Analytics', icon: BarChart2 },
     ];
 

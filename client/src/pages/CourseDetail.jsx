@@ -162,7 +162,7 @@ const CourseDetail = () => {
 
         if (course.price > 0) {
             try {
-                const { data } = await api.post('/payment/create-checkout-session', { courseId: id });
+                const { data } = await api.post('/payments/create-checkout-session', { courseId: id });
                 if (data.url) {
                     window.location.href = data.url; // Redirect to Stripe
                 } else {
@@ -170,7 +170,8 @@ const CourseDetail = () => {
                 }
             } catch (error) {
                 console.error('Payment error:', error);
-                alert(error.response?.data?.message || 'Could not initiate payment');
+                const errorMsg = error.response?.data?.message || error.message || 'Could not initiate payment';
+                alert(`Payment failed: ${errorMsg}`);
             }
         } else {
             // Free enrollment

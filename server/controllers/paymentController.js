@@ -11,17 +11,26 @@ if (!stripe) {
 }
 
 const createCheckoutSession = async (req, res) => {
+    console.log('--- Create Checkout Session Request ---');
+    console.log('User ID:', req.user ? req.user._id : 'No User');
+
     if (!stripe) {
+        console.error('Stripe is not initialized in controller');
         return res.status(500).json({ message: "Stripe is not configured on the server." });
     }
 
     try {
         const { courseId } = req.body;
+        console.log('Course ID:', courseId);
+
         const course = await Course.findById(courseId);
 
         if (!course) {
+            console.error('Course not found:', courseId);
             return res.status(404).json({ message: 'Course not found' });
         }
+
+        console.log('Course found:', course.title, 'Price:', course.price);
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -48,9 +57,10 @@ const createCheckoutSession = async (req, res) => {
             },
         });
 
+        console.log('Stripe Session Created:', session.id);
         res.json({ url: session.url, sessionId: session.id });
     } catch (error) {
-        console.error('Stripe error:', error);
+        console.error('Stripe error details:', error);
         res.status(500).json({ message: 'Payment session creation failed', error: error.message });
     }
 };

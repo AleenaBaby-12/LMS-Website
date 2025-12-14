@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopHeader from '../components/TopHeader';
 import api from '../services/api';
@@ -66,13 +66,15 @@ const AvailableCoursesList = () => {
 
 const StudentDashboard = () => {
     const [enrollments, setEnrollments] = useState([]);
+    const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         completed: 0,
         inProgress: 0,
-        totalHours: 0,
-        assignmentsPending: 2 // Mock data for now
+        totalLessons: 0,
+        assignmentsPending: 0
     });
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchStudentData();
@@ -80,13 +82,34 @@ const StudentDashboard = () => {
 
     const fetchStudentData = async () => {
         try {
-            const { data } = await api.get('/enrollments/my-courses');
-            setEnrollments(data);
+            const [enrollmentsRes, assignmentsRes] = await Promise.all([
+                api.get('/enrollments/my-courses'),
+                api.get('/assignments/my-assignments')
+            ]);
+
+            const enrollmentsData = enrollmentsRes.data;
+            const assignmentsData = assignmentsRes.data;
+
+            setEnrollments(enrollmentsData);
+            setAssignments(assignmentsData);
 
             // Calculate stats
-            const completed = data.filter(e => e.progress === 100).length;
-            const inProgress = data.length - completed;
-            setStats(prev => ({ ...prev, completed, inProgress }));
+            const completed = enrollmentsData.filter(e => e.progress === 100).length;
+            const inProgress = enrollmentsData.length - completed;
+            const totalLessons = enrollmentsData.reduce((acc, curr) => acc + (curr.completedLessons?.length || 0), 0);
+
+            // Filter pending assignments for "Up Next"
+            const pendingAssignments = assignmentsData.filter(a =>
+                (a.status === 'pending' || !a.status) && new Date(a.dueDate) > new Date()
+            );
+
+            setStats(prev => ({
+                ...prev,
+                completed,
+                inProgress,
+                totalLessons,
+                assignmentsPending: pendingAssignments.length
+            }));
         } catch (error) {
             console.error('Error fetching student data:', error);
             setLoading(false);
@@ -94,6 +117,12 @@ const StudentDashboard = () => {
             setLoading(false);
         }
     };
+
+    // Get top 3 upcoming assignments
+    const upNextAssignments = assignments
+        .filter(a => (a.status === 'pending' || !a.status) && new Date(a.dueDate) > new Date())
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .slice(0, 3);
 
     // Mock data for charts
     const chartData = [
@@ -139,11 +168,11 @@ const StudentDashboard = () => {
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
                                 <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                                    <Clock size={24} />
+                                    <TrendingUp size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500 font-medium">Hours Spent</p>
-                                    <h3 className="text-2xl font-bold text-gray-900">12.5h</h3>
+                                    <p className="text-sm text-gray-500 font-medium">Lessons Done</p>
+                                    <h3 className="text-2xl font-bold text-gray-900">{stats.totalLessons}</h3>
                                 </div>
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -151,8 +180,8 @@ const StudentDashboard = () => {
                                     <Award size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500 font-medium">Avg. Grade</p>
-                                    <h3 className="text-2xl font-bold text-gray-900">A-</h3>
+                                    <p className="text-sm text-gray-500 font-medium">Pending Tasks</p>
+                                    <h3 className="text-2xl font-bold text-gray-900">{stats.assignmentsPending}</h3>
                                 </div>
                             </div>
                         </div>
@@ -162,7 +191,7 @@ const StudentDashboard = () => {
                             <div className="lg:col-span-2 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-bold text-gray-900">In Progress</h2>
-                                    <Link to="/my-learning" className="text-sm text-blue-600 font-medium hover:text-blue-700">View All</Link>
+                                    <Link to="/courses" className="text-sm text-blue-600 font-medium hover:text-blue-700">View All</Link>
                                 </div>
 
                                 <div className="space-y-4">
@@ -175,7 +204,7 @@ const StudentDashboard = () => {
                                                 <div className="w-32 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shrink-0 overflow-hidden relative">
                                                     {enrollment.course?.thumbnail ? (
                                                         <img
-                                                            src={enrollment.course.thumbnail}
+                                                            src={enrollment.course.thumbnail.startsWith('http') ? enrollment.course.thumbnail : `http://localhost:5000${enrollment.course.thumbnail}`}
                                                             alt={enrollment.course.title}
                                                             className="w-full h-full object-cover object-center"
                                                         />
@@ -208,7 +237,7 @@ const StudentDashboard = () => {
 
                                                 {/* Action */}
                                                 <Link
-                                                    to={`/learn/${enrollment.course?._id}`}
+                                                    to={`/courses/${enrollment.course?._id}`}
                                                     className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                                                 >
                                                     <PlayCircle size={20} />
@@ -243,24 +272,40 @@ const StudentDashboard = () => {
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="font-bold text-gray-900">Up Next</h3>
-                                        <span className="text-xs font-medium bg-red-50 text-red-600 px-2 py-1 rounded-full">2 Pending</span>
+                                        {stats.assignmentsPending > 0 && (
+                                            <span className="text-xs font-medium bg-red-50 text-red-600 px-2 py-1 rounded-full">
+                                                {stats.assignmentsPending} Pending
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="space-y-4">
-                                        {[1, 2].map((i) => (
-                                            <div key={i} className="flex gap-3 items-start p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-100">
-                                                <div className="mt-1 text-gray-400">
-                                                    <AlertCircle size={16} />
+                                        {upNextAssignments.length > 0 ? (
+                                            upNextAssignments.map((assignment) => (
+                                                <div
+                                                    key={assignment._id || assignment.id}
+                                                    onClick={() => navigate(`/assignments/${assignment._id || assignment.id}`)}
+                                                    className="flex gap-3 items-start p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-100 group"
+                                                >
+                                                    <div className="mt-1 text-gray-400 group-hover:text-blue-500">
+                                                        <AlertCircle size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-1">{assignment.title}</h4>
+                                                        <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                                                            <Calendar size={10} /> Due {new Date(assignment.dueDate).toLocaleDateString()}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-400 mt-1">{assignment.course?.title}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h4 className="text-sm font-semibold text-gray-800">React Components Quiz</h4>
-                                                    <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                                                        <Calendar size={10} /> Due tomorrow, 11:59 PM
-                                                    </p>
-                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-6 text-gray-400">
+                                                <CheckCircle size={32} className="mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">No pending assignments!</p>
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
-                                    <button className="w-full mt-4 btn btn-outline btn-sm">View All Assignments</button>
+                                    <Link to="/assignments" className="w-full mt-4 btn btn-outline btn-sm justify-center">View All Assignments</Link>
                                 </div>
 
                                 {/* Mini Analytics */}
