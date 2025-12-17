@@ -187,10 +187,31 @@ const getCourseProgress = async (req, res) => {
     }
 };
 
+// @desc    Get all enrollments for courses created by the current teacher
+// @route   GET /api/enrollments/teacher
+// @access  Private/Teacher
+const getTeacherEnrollments = async (req, res) => {
+    try {
+        // 1. Find all courses by this instructor
+        const courses = await Course.find({ instructor: req.user._id }).select('_id title price');
+        const courseIds = courses.map(c => c._id);
+
+        // 2. Find all enrollments for these courses
+        const enrollments = await Enrollment.find({ course: { $in: courseIds } })
+            .populate('student', 'name email profilePicture')
+            .populate('course', 'title price');
+
+        res.json(enrollments);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     enrollCourse,
     getMyCourses,
     updateProgress,
     toggleLessonComplete,
-    getCourseProgress
+    getCourseProgress,
+    getTeacherEnrollments
 }

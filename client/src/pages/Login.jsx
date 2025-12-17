@@ -9,8 +9,25 @@ const Login = () => {
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
+    const validateForm = () => {
+        if (!email || !password) {
+            setError('Please fill in all fields');
+            return false;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError('Please enter a valid email address');
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+
+        if (!validateForm()) return;
+
         try {
             await login(email, password);
             navigate('/dashboard');

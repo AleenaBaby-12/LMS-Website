@@ -56,14 +56,64 @@ const Register = () => {
         }
     };
 
+    const validateForm = () => {
+        // Required fields check - Common
+        if (!name || !email || !password || !phone || !country || !bio) {
+            setError('Please fill in all required fields (Name, Email, Password, Phone, Country, Bio)');
+            return false;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError('Please enter a valid email address');
+            return false;
+        }
+
+        // Password length
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters long');
+            return false;
+        }
+
+        // Phone validation
+        if (!/^\+?[\d\s-]{10,}$/.test(phone)) {
+            setError('Please enter a valid phone number');
+            return false;
+        }
+
+        // Teacher specific validation
+        if (role === 'teacher') {
+            if (!professionalTitle || !organization || !website || !linkedIn || !qualifications) {
+                setError('Please fill in all instructor details');
+                return false;
+            }
+
+            // URL validation
+            const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+            if (!urlRegex.test(website)) {
+                setError('Please enter a valid website URL');
+                return false;
+            }
+            if (!urlRegex.test(linkedIn)) {
+                setError('Please enter a valid LinkedIn URL');
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
+        if (!validateForm()) return;
+
         try {
             const userData = {
                 name, email, password, role,
-                phone, bio, country, profilePicture
+                phone, bio, country, profilePicture // profilePicture is optional
             };
 
             if (role === 'teacher') {
@@ -126,7 +176,7 @@ const Register = () => {
                                 </div>
                                 <label className="btn btn-outline btn-sm cursor-pointer flex items-center gap-2 px-4 py-2 text-sm w-full justification-center">
                                     <Upload size={16} />
-                                    <span className="truncate">{uploading ? '...' : 'Upload Photo'}</span>
+                                    <span className="truncate">{uploading ? '...' : 'Upload Photo (Optional)'}</span>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -189,31 +239,37 @@ const Register = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1">Phone</label>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                        Phone <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="tel"
                                         placeholder="+1 234 567 8900"
                                         className="input w-full py-2"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
+                                        required
                                     />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1">Country</label>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                        Country <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         placeholder="United States"
                                         className="input w-full py-2"
                                         value={country}
                                         onChange={(e) => setCountry(e.target.value)}
+                                        required
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                        Bio {role === 'teacher' && <span className="text-red-500">*</span>}
+                                        Bio <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
                                         placeholder={role === 'teacher' ? "Teaching exp..." : "About you..."}
@@ -222,7 +278,7 @@ const Register = () => {
                                         value={bio}
                                         onChange={(e) => setBio(e.target.value)}
                                         maxLength="500"
-                                        required={role === 'teacher'}
+                                        required
                                         style={{ height: '42px' }}
                                     />
                                 </div>
@@ -238,58 +294,73 @@ const Register = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Title</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            Title <span className="text-red-500">*</span>
+                                        </label>
                                         <input
                                             type="text"
                                             placeholder="e.g. Professor"
                                             className="input w-full py-2"
                                             value={professionalTitle}
                                             onChange={(e) => setProfessionalTitle(e.target.value)}
+                                            required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Organization</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            Organization <span className="text-red-500">*</span>
+                                        </label>
                                         <input
                                             type="text"
                                             placeholder="University/Company"
                                             className="input w-full py-2"
                                             value={organization}
                                             onChange={(e) => setOrganization(e.target.value)}
+                                            required
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Website</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            Website <span className="text-red-500">*</span>
+                                        </label>
                                         <input
                                             type="url"
                                             placeholder="https://site.com"
                                             className="input w-full py-2"
                                             value={website}
                                             onChange={(e) => setWebsite(e.target.value)}
+                                            required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-700 mb-1">LinkedIn</label>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            LinkedIn <span className="text-red-500">*</span>
+                                        </label>
                                         <input
                                             type="url"
                                             placeholder="https://linkedin.com/..."
                                             className="input w-full py-2"
                                             value={linkedIn}
                                             onChange={(e) => setLinkedIn(e.target.value)}
+                                            required
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1">Qualifications</label>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                        Qualifications <span className="text-red-500">*</span>
+                                    </label>
                                     <textarea
                                         placeholder="Degrees, certifications..."
                                         className="input w-full resize-none py-1"
                                         rows="2"
                                         value={qualifications}
                                         onChange={(e) => setQualifications(e.target.value)}
+                                        required
                                     />
                                 </div>
                             </div>

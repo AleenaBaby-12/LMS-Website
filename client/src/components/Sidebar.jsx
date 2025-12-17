@@ -16,10 +16,10 @@ const Sidebar = () => {
 
     const teacherLinks = [
         { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-        { path: '/my-courses', label: 'My Courses', icon: BookOpen },
-        { path: '/students', label: 'Students', icon: Users },
+        { path: '/dashboard?view=courses', label: 'My Courses', icon: BookOpen },
+        { path: '/dashboard?view=students', label: 'Students', icon: Users },
         { path: '/assignments', label: 'Assignments', icon: FileText },
-        { path: '/analytics', label: 'Analytics', icon: BarChart2 },
+        { path: '/dashboard?view=analytics', label: 'Analytics', icon: BarChart2 },
     ];
 
     const studentLinks = [
@@ -33,6 +33,9 @@ const Sidebar = () => {
     const navItems = user?.role === 'student' ? studentLinks : teacherLinks;
 
     const isActive = (path) => {
+        if (path.includes('?')) {
+            return location.pathname + location.search === path;
+        }
         return location.pathname === path;
     };
 

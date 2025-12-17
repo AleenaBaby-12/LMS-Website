@@ -17,7 +17,9 @@ const Dashboard = () => {
         <div className="container mt-8 text-center">
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-gray-500 mt-4">
-                Welcome, {user?.name}. Your role ({user?.role}) dashboard is under construction.
+                Welcome, {user?.name}. <br />
+                Your role is recognized as: <strong>{user?.role || 'Unknown'}</strong>. <br />
+                This dashboard is under construction or your role does not have a specific dashboard yet.
             </p>
         </div>
     );

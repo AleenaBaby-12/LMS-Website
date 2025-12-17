@@ -19,7 +19,9 @@ const getCourses = async (req, res) => {
 // @access  Private/Teacher
 const getMyCreatedCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ instructor: req.user._id }).populate('instructor', 'name');
+        const courses = await Course.find({ instructor: req.user._id })
+            .populate('instructor', 'name')
+            .populate('studentsEnrolled', 'name email');
         res.json(courses);
     } catch (error) {
         res.status(500).json({ message: error.message });

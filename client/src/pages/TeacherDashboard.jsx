@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopHeader from '../components/TopHeader';
 import api from '../services/api';
@@ -14,31 +14,68 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
-// Mock Data for Analytics
-const analyticsData = [
-    { name: 'Mon', students: 4, views: 24 },
-    { name: 'Tue', students: 7, views: 35 },
-    { name: 'Wed', students: 5, views: 20 },
-    { name: 'Thu', students: 12, views: 45 },
-    { name: 'Fri', students: 10, views: 50 },
-    { name: 'Sat', students: 15, views: 65 },
-    { name: 'Sun', students: 18, views: 78 },
-];
+
 
 const TeacherDashboard = () => {
     const [view, setView] = useState('overview'); // overview, courses, students, analytics
     const [courses, setCourses] = useState([]);
-    const [stats, setStats] = useState({ totalCourses: 0, totalStudents: 0 });
+    const [enrollments, setEnrollments] = useState([]);
+    const [analyticsChartData, setAnalyticsData] = useState([]);
+    const [stats, setStats] = useState({ totalCourses: 0, totalStudents: 0, totalRevenue: 0 });
     const [loading, setLoading] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const viewParam = params.get('view');
+        if (viewParam) {
+            setView(viewParam);
+        } else {
+            setView('overview');
+        }
+        setIsMounted(true);
+    }, [location]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data } = await api.get('/courses/mine');
-                setCourses(data);
+                // Parallel fetch for courses and enrollments
+                const [coursesRes, enrollmentsRes] = await Promise.all([
+                    api.get('/courses/mine'),
+                    api.get('/enrollments/teacher')
+                ]);
+
+                const coursesData = coursesRes.data;
+                const enrollmentsData = enrollmentsRes.data;
+
+                setCourses(coursesData);
+                setEnrollments(enrollmentsData); // We need to add this state
+
+                // Calculate Stats
+                const totalRevenue = enrollmentsData.reduce((acc, curr) => acc + (curr.course?.price || 0), 0);
+                const totalStudents = enrollmentsData.length;
+
+                // Calculate Chart Data (Last 7 Days)
+                const last7Days = [...Array(7)].map((_, i) => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - (6 - i));
+                    return d.toISOString().split('T')[0];
+                });
+
+                const chartData = last7Days.map(date => {
+                    return {
+                        name: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+                        students: dayEnrollments
+                    };
+                });
+
+                setAnalyticsData(chartData); // We need to add this state
+
                 setStats({
-                    totalCourses: data.length,
-                    totalStudents: data.reduce((acc, curr) => acc + (curr.studentsEnrolled?.length || 0), 0)
+                    totalCourses: coursesData.length,
+                    totalStudents: totalStudents,
+                    totalRevenue: totalRevenue
                 });
             } catch (error) {
                 console.error('Failed to fetch data', error);
@@ -114,21 +151,28 @@ const TeacherDashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Chart Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2 min-w-0">
                     <h3 className="text-lg font-bold text-gray-800 mb-4">Student Engagement</h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={analyticsData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Line type="monotone" dataKey="views" stroke="#3B82F6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                                <Line type="monotone" dataKey="students" stroke="#10B981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                    <div className="h-64 w-full">
+                        {isMounted && (
+                            <ResponsiveContainer width="100%" height="100%">
+                                {analyticsChartData && analyticsChartData.length > 0 ? (
+                                    <LineChart data={analyticsChartData}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Line type="monotone" dataKey="students" stroke="#10B981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+                                    </LineChart>
+                                ) : (
+                                    <div className="flex items-center justify-center h-full text-gray-400">
+                                        No data available
+                                    </div>
+                                )}
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
@@ -136,7 +180,7 @@ const TeacherDashboard = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-bold text-gray-800">Recent Courses</h3>
-                        <Link to="#" onClick={() => setView('courses')} className="text-sm text-blue-600 hover:underline">View All</Link>
+                        <Link to="/dashboard?view=courses" className="text-sm text-blue-600 hover:underline">View All</Link>
                     </div>
                     <div className="space-y-4">
                         {courses.slice(0, 3).map(course => (
@@ -226,18 +270,189 @@ const TeacherDashboard = () => {
         </div>
     );
 
+    const renderAnalytics = () => (
+        <div className="space-y-6">
+            <div>
+                <h2 className="text-2xl font-bold text-gray-800">Analytics</h2>
+                <p className="text-gray-500">Track your course performance and student engagement.</p>
+            </div>
+
+            {/* Top Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Revenue</h3>
+                    <p className="text-3xl font-bold text-gray-800">${stats.totalRevenue.toFixed(2)}</p>
+                    <span className="text-xs text-green-600 font-medium">Lifetime revenue</span>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Total Enrollments</h3>
+                    <p className="text-3xl font-bold text-gray-800">{stats.totalStudents}</p>
+                    <span className="text-xs text-blue-600 font-medium">Across all courses</span>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Avg. Course Rating</h3>
+                    <p className="text-3xl font-bold text-gray-800">
+                        {(courses.reduce((acc, curr) => acc + (curr.averageRating || 0), 0) / (courses.length || 1)).toFixed(1)}
+                    </p>
+                    <span className="text-xs text-gray-500 font-medium">Average across courses</span>
+                </div>
+            </div>
+
+            {/* Main Chart */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-w-0">
+                <h3 className="text-lg font-bold text-gray-800 mb-6">Enrollment Activity (Last 7 Days)</h3>
+                <div className="h-80 w-full">
+                    {isMounted && (
+                        <ResponsiveContainer width="100%" height="100%">
+                            {analyticsChartData && analyticsChartData.length > 0 ? (
+                                <LineChart data={analyticsChartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Line name="New Enrollments" type="monotone" dataKey="students" stroke="#10B981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+                                    {/* Removed simulated views for clarity unless requested */}
+                                </LineChart>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-gray-400">
+                                    No data available
+                                </div>
+                            )}
+                        </ResponsiveContainer>
+                    )}
+                </div>
+            </div>
+
+            {/* Course Performance Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-800">Course Performance</h3>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-gray-50">
+                                <th className="px-6 py-4 font-semibold text-gray-700">Course Name</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Enrollments</th>
+                                <th className="px-6 py-4 font-semibold text-gray-700">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {courses.slice(0, 5).map(course => {
+                                const courseEnrollments = enrollments.filter(e => e.course && e.course._id === course._id).length;
+                                // Fallback to populate length if enrollments fetch fails or for initial state
+                                const count = courseEnrollments || course.studentsEnrolled?.length || 0;
+                                return (
+                                    <tr key={course._id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 font-medium text-gray-900">{course.title}</td>
+                                        <td className="px-6 py-4">{count}</td>
+                                        <td className="px-6 py-4 font-medium text-green-600">
+                                            ${(course.price * count).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderStudents = () => {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">My Students</h2>
+                    <p className="text-gray-500">Manage and view your enrolled students.</p>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-100">
+                                    <th className="px-6 py-4 font-semibold text-gray-700">Student Name</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700">Email</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700">Enrolled Course</th>
+                                    <th className="px-6 py-4 font-semibold text-gray-700">Joined Date</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {enrollments.length > 0 ? (
+                                    enrollments.map((enrollment, index) => {
+                                        const student = enrollment.student;
+                                        if (!student) return null; // Skip if student deleted
+
+                                        return (
+                                            <tr key={enrollment._id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        {student.profilePicture ? (
+                                                            <img src={student.profilePicture} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                                        ) : (
+                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold bg-blue-100 text-blue-600`}>
+                                                                {student.name ? student.name.charAt(0).toUpperCase() : '?'}
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <span className="font-medium text-gray-900 block">{student.name || 'Unknown Student'}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-600">
+                                                    {student.email || <span className="text-gray-400 italic">No Email</span>}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                                                        {enrollment.course?.title || 'Unknown Course'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-500 text-sm">
+                                                    {new Date(enrollment.createdAt).toLocaleDateString()}
+                                                </td>
+                                            </tr>
+                                        )
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
+                                            No students enrolled yet.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="bg-gray-50 min-h-screen">
             <Sidebar />
             <TopHeader />
             <main className="md:ml-64 p-6 md:p-10">
-                {view === 'overview' && renderOverview()}
-                {view === 'courses' && renderCourses()}
-                {/* Placeholders for other views could be added here */}
-                {view !== 'overview' && view !== 'courses' && (
-                    <div className="text-center py-20">
-                        <h2 className="text-2xl font-bold text-gray-300">Feature Coming Soon</h2>
+                {loading ? (
+                    <div className="flex h-[50vh] items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                     </div>
+                ) : (
+                    <>
+                        {view === 'overview' && renderOverview()}
+                        {view === 'courses' && renderCourses()}
+                        {view === 'students' && renderStudents()}
+                        {view === 'analytics' && renderAnalytics()}
+                        {/* Placeholders for other views could be added here */}
+                        {view !== 'overview' && view !== 'courses' && view !== 'students' && view !== 'analytics' && (
+                            <div className="text-center py-20">
+                                <h2 className="text-2xl font-bold text-gray-300">Feature Coming Soon</h2>
+                            </div>
+                        )}
+                    </>
                 )}
             </main>
         </div>
