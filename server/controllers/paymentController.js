@@ -1,6 +1,7 @@
 const Stripe = require('stripe');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
+const { createNotification } = require('./notificationController');
 
 const stripe = process.env.STRIPE_SECRET_KEY
     ? Stripe(process.env.STRIPE_SECRET_KEY)
@@ -32,18 +33,38 @@ const createCheckoutSession = async (req, res) => {
 
         console.log('Course found:', course.title, 'Price:', course.price);
 
+        // Stripe requires absolute URLs for images. If it's a relative path, don't send it.
+        const imageUrls = [];
+        if (course.thumbnail) {
+            if (course.thumbnail.startsWith('http')) {
+                imageUrls.push(course.thumbnail);
+            } else if (process.env.CLIENT_URL && !process.env.CLIENT_URL.includes('localhost')) {
+                // Only prepend if we have a production-like URL
+                imageUrls.push(`${process.env.CLIENT_URL}${course.thumbnail}`);
+            }
+        }
+
+        if (!req.user || !req.user.email) {
+            console.error('User email missing for payment session');
+            return res.status(400).json({
+                message: 'User email is required for payment',
+                error: 'Your profile is missing an email address. Please update your profile.'
+            });
+        }
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
+            customer_email: req.user.email, // Often required for Indian exports/compliance
             line_items: [
                 {
                     price_data: {
-                        currency: 'usd',
+                        currency: 'inr',
                         product_data: {
-                            name: course.title,
-                            description: course.description,
-                            images: course.thumbnail ? [course.thumbnail] : [],
+                            name: course.title || 'Course Enrollment',
+                            description: course.description || 'Access to course content',
+                            images: imageUrls,
                         },
-                        unit_amount: Math.round(course.price * 100), // Stripe expects cents
+                        unit_amount: Math.round((course.price || 0) * 100), // Stripe expects paise (cents)
                     },
                     quantity: 1,
                 },
@@ -55,13 +76,31 @@ const createCheckoutSession = async (req, res) => {
                 courseId: courseId,
                 userId: req.user._id.toString(),
             },
+            payment_intent_data: {
+                description: `Enrollment in course: ${course.title}`,
+            },
+            locale: 'auto',
+            billing_address_collection: 'required',
+            custom_text: {
+                submit: {
+                    message: 'Transaction will be processed in Indian Rupees (INR).',
+                },
+            },
         });
 
-        console.log('Stripe Session Created:', session.id);
+        console.log('Stripe Session Created Successfully:', session.id);
         res.json({ url: session.url, sessionId: session.id });
     } catch (error) {
-        console.error('Stripe error details:', error);
-        res.status(500).json({ message: 'Payment session creation failed', error: error.message });
+        console.error('--- STRIPE SESSION CREATION FAILED ---');
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+
+        res.status(500).json({
+            message: 'Payment session creation failed',
+            error: error.message,
+            stripe_error_code: error.code,
+            details: error.raw?.message || null
+        });
     }
 };
 
@@ -91,10 +130,34 @@ const verifyPayment = async (req, res) => {
                 course: courseId
             });
 
-            // Add to course student list
-            await Course.findByIdAndUpdate(courseId, {
-                $addToSet: { studentsEnrolled: req.user._id }
+            // Add to course student list and fetch instructor
+            const course = await Course.findByIdAndUpdate(
+                courseId,
+                { $addToSet: { studentsEnrolled: req.user._id } },
+                { new: true }
+            ).populate('instructor');
+
+            // --- Notifications ---
+
+            // 1. Notify Student
+            await createNotification({
+                recipient: req.user._id,
+                message: `Purchase successful! You have been enrolled in ${course.title}`,
+                type: 'success',
+                relatedId: course._id,
+                onModel: 'Course'
             });
+
+            // 2. Notify Instructor
+            if (course.instructor) {
+                await createNotification({
+                    recipient: course.instructor._id || course.instructor, // Handle if populated or ID
+                    message: `New student enrolled in ${course.title} (Paid): ${req.user.name}`,
+                    type: 'info',
+                    relatedId: course._id,
+                    onModel: 'Course'
+                });
+            }
 
             res.json({ success: true, message: 'Payment verified and enrolled' });
         } else {

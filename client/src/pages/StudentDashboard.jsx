@@ -52,7 +52,7 @@ const AvailableCoursesList = () => {
                         <div className="flex items-center gap-2 mt-2 text-xs font-medium text-gray-500">
                             <span>{course.instructor?.name || 'Instructor'}</span>
                             <span>•</span>
-                            <span className="text-green-600">{course.price === 0 ? 'Free' : `$${course.price}`}</span>
+                            <span className="text-green-600">{course.price === 0 ? 'Free' : `₹${course.price}`}</span>
                         </div>
                     </div>
                     <Link to={`/courses/${course._id}`} className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">

@@ -169,9 +169,15 @@ const CourseDetail = () => {
                     alert('Payment init failed');
                 }
             } catch (error) {
-                console.error('Payment error:', error);
-                const errorMsg = error.response?.data?.message || error.message || 'Could not initiate payment';
-                alert(`Payment failed: ${errorMsg}`);
+                console.error('--- STRIPE PAYMENT ERROR ---');
+                console.error('Error Object:', error);
+                console.error('Response Data:', error.response?.data);
+
+                const serverDetails = error.response?.data?.details;
+                const serverError = error.response?.data?.error;
+                const errorMsg = serverDetails || serverError || error.response?.data?.message || error.message || 'Could not initiate payment';
+
+                alert(`Payment Failure: ${errorMsg}\n\n(Console F12 for more details)`);
             }
         } else {
             // Free enrollment
@@ -305,7 +311,7 @@ const CourseDetail = () => {
 
                         {!isInstructor && !enrolled && user?.role === 'student' && (
                             <button onClick={handleEnroll} className="btn btn-primary w-full mt-4 text-lg py-3">
-                                {course.price > 0 ? `Buy Now $${course.price}` : 'Enroll Now'}
+                                {course.price > 0 ? `Buy Now ₹${course.price}` : 'Enroll Now'}
                             </button>
                         )}
                         {enrolled && (

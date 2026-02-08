@@ -14,12 +14,20 @@ import CreateAssignment from './pages/CreateAssignment';
 import AssignmentDetails from './pages/AssignmentDetails';
 import AssignmentSubmissions from './pages/AssignmentSubmissions';
 import PaymentSuccess from './pages/PaymentSuccess';
+import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
 import { useAuth } from './context/AuthContext';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
   return user ? children : <Navigate to="/login" />;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  return user && user.role === 'admin' ? children : <Navigate to="/dashboard" />;
 };
 
 function App() {
@@ -83,6 +91,16 @@ function App() {
           </PrivateRoute>
         } />
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/profile" element={
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        } />
+        <Route path="/admin/dashboard" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } />
       </Routes>
     </div>
   );

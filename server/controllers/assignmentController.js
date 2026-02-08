@@ -2,6 +2,7 @@ const Assignment = require('../models/Assignment');
 const Submission = require('../models/Submission');
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
+const { createNotification } = require('./notificationController');
 
 // @desc    Create new assignment
 // @route   POST /api/assignments
@@ -37,6 +38,24 @@ exports.createAssignment = async (req, res) => {
             points,
             resources: resources || []
         });
+
+        // Notify all enrolled students
+        const enrolledStudents = course.studentsEnrolled || [];
+        console.log(`[DEBUG] Assignment created. Course has ${enrolledStudents.length} enrolled students.`);
+        console.log(`[DEBUG] IDs: ${enrolledStudents.map(id => id.toString()).join(', ')}`);
+
+
+
+        // Batch create notifications (using loop for now, optimization: insertMany)
+        for (const studentId of enrolledStudents) {
+            await createNotification({
+                recipient: studentId,
+                message: `New assignment posted in ${course.title}: ${title}`,
+                type: 'info',
+                relatedId: assignment._id,
+                onModel: 'Assignment'
+            });
+        }
 
         res.status(201).json(assignment);
     } catch (error) {
@@ -129,7 +148,7 @@ exports.submitAssignment = async (req, res) => {
         const { content, attachments } = req.body;
         const assignmentId = req.params.id;
 
-        const assignment = await Assignment.findById(assignmentId);
+        const assignment = await Assignment.findById(assignmentId).populate('course'); // Populate course to access instructor
         if (!assignment) {
             return res.status(404).json({ message: 'Assignment not found' });
         }
@@ -147,6 +166,18 @@ exports.submitAssignment = async (req, res) => {
             existingSubmission.submittedAt = Date.now();
             existingSubmission.status = 'submitted'; // Reset status if it was graded? Maybe keep as is.
             await existingSubmission.save();
+
+            // Notify Teacher (Resubmission)
+            if (assignment.course && assignment.course.instructor) {
+                await createNotification({
+                    recipient: assignment.course.instructor,
+                    message: `Assignment resubmitted by ${req.user.name}: ${assignment.title}`,
+                    type: 'info',
+                    relatedId: assignment._id,
+                    onModel: 'Assignment'
+                });
+            }
+
             return res.json(existingSubmission);
         }
 
@@ -158,6 +189,17 @@ exports.submitAssignment = async (req, res) => {
             attachments,
             status: 'submitted'
         });
+
+        // Notify Teacher (New Submission)
+        if (assignment.course && assignment.course.instructor) {
+            await createNotification({
+                recipient: assignment.course.instructor,
+                message: `New assignment submission by ${req.user.name}: ${assignment.title}`,
+                type: 'success', // or info
+                relatedId: assignment._id,
+                onModel: 'Assignment'
+            });
+        }
 
         res.status(201).json(submission);
     } catch (error) {
@@ -214,6 +256,15 @@ exports.gradeSubmission = async (req, res) => {
         submission.feedback = feedback;
         submission.status = 'graded';
         await submission.save();
+
+        // Notify Student
+        await createNotification({
+            recipient: submission.student._id || submission.student,
+            message: `Your assignment "${submission.assignment.title}" has been graded`,
+            type: 'success',
+            relatedId: submission.assignment._id,
+            onModel: 'Assignment'
+        });
 
         res.json(submission);
     } catch (error) {

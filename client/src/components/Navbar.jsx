@@ -30,7 +30,16 @@ const Navbar = () => {
                 <div className="h-6 w-px bg-gray-300 mx-2"></div>
                 {user ? (
                     <>
-                        <span className="text-gray-500">Welcome, {user.name}</span>
+                        <div className="flex items-center gap-3 mr-2">
+                            {user.profilePicture && (
+                                <img
+                                    src={user.profilePicture}
+                                    alt={user.name}
+                                    className="w-10 h-10 rounded-full object-cover border-2 border-blue-500 shadow-sm"
+                                />
+                            )}
+                            <span className="text-gray-500 font-medium">Welcome, {user.name}</span>
+                        </div>
                         <Link to="/dashboard" className="btn btn-outline">Dashboard</Link>
                         <button onClick={handleLogout} className="btn btn-primary">
                             <LogOut size={18} /> Logout

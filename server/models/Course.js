@@ -38,6 +38,11 @@ const courseSchema = new mongoose.Schema({
     totalReviews: {
         type: Number,
         default: 0
+    },
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'approved'
     }
 }, { timestamps: true });
 

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopHeader from '../components/TopHeader';
 import api from '../services/api';
-import { Plus, Trash2, Users, BookOpen, Clock, TrendingUp, PlusCircle, FileText } from 'lucide-react';
+import { Plus, Trash2, Users, BookOpen, Clock, TrendingUp, PlusCircle, FileText, IndianRupee } from 'lucide-react';
 import {
     LineChart,
     Line,
@@ -21,7 +21,7 @@ const TeacherDashboard = () => {
     const [courses, setCourses] = useState([]);
     const [enrollments, setEnrollments] = useState([]);
     const [analyticsChartData, setAnalyticsData] = useState([]);
-    const [stats, setStats] = useState({ totalCourses: 0, totalStudents: 0, totalRevenue: 0 });
+    const [stats, setStats] = useState({ totalCourses: 0, totalStudents: 0, totalRevenue: 0, totalAssignments: 0 });
     const [loading, setLoading] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
     const location = useLocation();
@@ -40,21 +40,24 @@ const TeacherDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Parallel fetch for courses and enrollments
-                const [coursesRes, enrollmentsRes] = await Promise.all([
+                // Parallel fetch for courses, enrollments, and assignments
+                const [coursesRes, enrollmentsRes, assignmentsRes] = await Promise.all([
                     api.get('/courses/mine'),
-                    api.get('/enrollments/teacher')
+                    api.get('/enrollments/teacher'),
+                    api.get('/assignments/my-assignments').catch(() => ({ data: [] })) // Fallback if error
                 ]);
 
                 const coursesData = coursesRes.data;
                 const enrollmentsData = enrollmentsRes.data;
+                const assignmentsData = assignmentsRes.data;
 
                 setCourses(coursesData);
-                setEnrollments(enrollmentsData); // We need to add this state
+                setEnrollments(enrollmentsData);
 
                 // Calculate Stats
                 const totalRevenue = enrollmentsData.reduce((acc, curr) => acc + (curr.course?.price || 0), 0);
                 const totalStudents = enrollmentsData.length;
+                const totalAssignments = assignmentsData.length || 0;
 
                 // Calculate Chart Data (Last 7 Days)
                 const last7Days = [...Array(7)].map((_, i) => {
@@ -64,18 +67,24 @@ const TeacherDashboard = () => {
                 });
 
                 const chartData = last7Days.map(date => {
+                    const dayEnrollments = enrollmentsData.filter(e => {
+                        const enrollDate = new Date(e.createdAt).toISOString().split('T')[0];
+                        return enrollDate === date;
+                    }).length;
+
                     return {
                         name: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
                         students: dayEnrollments
                     };
                 });
 
-                setAnalyticsData(chartData); // We need to add this state
+                setAnalyticsData(chartData);
 
                 setStats({
                     totalCourses: coursesData.length,
                     totalStudents: totalStudents,
-                    totalRevenue: totalRevenue
+                    totalRevenue: totalRevenue,
+                    totalAssignments: totalAssignments
                 });
             } catch (error) {
                 console.error('Failed to fetch data', error);
@@ -107,111 +116,120 @@ const TeacherDashboard = () => {
         }
     };
 
-    const renderOverview = () => (
-        <div className="space-y-6">
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                        <BookOpen size={24} />
+    const renderOverview = () => {
+        return (
+            <div className="space-y-6">
+                {/* Quick Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Total Courses */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                            <BookOpen size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">Total Courses</p>
+                            <h3 className="text-2xl font-bold text-gray-800">{stats.totalCourses}</h3>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500 font-medium">Total Courses</p>
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.totalCourses}</h3>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-                        <Users size={24} />
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500 font-medium">Active Students</p>
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.totalStudents}</h3>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-                        <Clock size={24} />
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500 font-medium">Hours Content</p>
-                        <h3 className="text-2xl font-bold text-gray-800">12.5</h3>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-3 bg-orange-50 text-orange-600 rounded-lg">
-                        <TrendingUp size={24} />
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500 font-medium">Avg Rating</p>
-                        <h3 className="text-2xl font-bold text-gray-800">4.8</h3>
-                    </div>
-                </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Chart Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2 min-w-0">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4">Student Engagement</h3>
-                    <div className="h-64 w-full">
-                        {isMounted && (
-                            <ResponsiveContainer width="100%" height="100%">
-                                {analyticsChartData && analyticsChartData.length > 0 ? (
-                                    <LineChart data={analyticsChartData}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Line type="monotone" dataKey="students" stroke="#10B981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
-                                    </LineChart>
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400">
-                                        No data available
+                    {/* Active Students */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div className="p-3 bg-green-50 text-green-600 rounded-lg">
+                            <Users size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">Active Students</p>
+                            <h3 className="text-2xl font-bold text-gray-800">{stats.totalStudents}</h3>
+                        </div>
+                    </div>
+
+                    {/* Total Revenue */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                            <IndianRupee size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">Total Revenue</p>
+                            <h3 className="text-2xl font-bold text-gray-800">₹{stats.totalRevenue.toFixed(2)}</h3>
+                        </div>
+                    </div>
+
+                    {/* Total Assignments */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div className="p-3 bg-orange-50 text-orange-600 rounded-lg">
+                            <FileText size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">Total Assignments</p>
+                            <h3 className="text-2xl font-bold text-gray-800">{stats.totalAssignments}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Chart Section */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2 min-w-0">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">Student Engagement</h3>
+                        <div className="h-64 w-full">
+                            {isMounted && (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    {analyticsChartData && analyticsChartData.length > 0 ? (
+                                        <LineChart data={analyticsChartData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                            />
+                                            <Line type="monotone" dataKey="students" stroke="#10B981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+                                        </LineChart>
+                                    ) : (
+                                        <div className="flex items-center justify-center h-full text-gray-400">
+                                            No data available
+                                        </div>
+                                    )}
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Recent Courses List */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-gray-800">Recent Courses</h3>
+                            <Link to="/dashboard?view=courses" className="text-sm text-blue-600 hover:underline">View All</Link>
+                        </div>
+                        <div className="space-y-4">
+                            {courses.slice(0, 3).map(course => (
+                                <div key={course._id} className="flex gap-3 items-center p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
+                                    <img
+                                        src={course.thumbnail?.startsWith('http') ? course.thumbnail : `http://localhost:5000${course.thumbnail}`}
+                                        alt=""
+                                        className="w-12 h-12 rounded-lg object-cover bg-gray-200"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-semibold text-gray-800 text-sm truncate">{course.title}</h4>
+                                        <p className="text-xs text-gray-500">{course.studentsEnrolled?.length || 0} students</p>
                                     </div>
-                                )}
-                            </ResponsiveContainer>
-                        )}
-                    </div>
-                </div>
-
-                {/* Recent Courses List */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-gray-800">Recent Courses</h3>
-                        <Link to="/dashboard?view=courses" className="text-sm text-blue-600 hover:underline">View All</Link>
-                    </div>
-                    <div className="space-y-4">
-                        {courses.slice(0, 3).map(course => (
-                            <div key={course._id} className="flex gap-3 items-center p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
-                                <img
-                                    src={course.thumbnail?.startsWith('http') ? course.thumbnail : `http://localhost:5000${course.thumbnail}`}
-                                    alt=""
-                                    className="w-12 h-12 rounded-lg object-cover bg-gray-200"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-semibold text-gray-800 text-sm truncate">{course.title}</h4>
-                                    <p className="text-xs text-gray-500">{course.studentsEnrolled?.length || 0} students</p>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${course.isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                        {course.isPublished ? 'Published' : 'Draft'}
+                                    </span>
                                 </div>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${course.isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                    {course.isPublished ? 'Published' : 'Draft'}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="flex flex-col gap-2 mt-6">
-                        <Link to="/create-course" className="btn btn-primary w-full justify-center">
-                            <Plus size={18} /> Add New Course
-                        </Link>
-                        <Link to="/create-assignment" className="btn btn-outline w-full justify-center">
-                            <FileText size={18} /> Add New Assignment
-                        </Link>
+                            ))}
+                        </div>
+                        <div className="flex flex-col gap-2 mt-6">
+                            <Link to="/create-course" className="btn btn-primary w-full justify-center">
+                                <Plus size={18} /> Add New Course
+                            </Link>
+                            <Link to="/create-assignment" className="btn btn-outline w-full justify-center">
+                                <FileText size={18} /> Add New Assignment
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderCourses = () => (
         <div className="space-y-6">
@@ -236,7 +254,7 @@ const TeacherDashboard = () => {
                             />
                             <div className="absolute top-3 right-3 flex gap-2">
                                 <span className="bg-white/90 backdrop-blur px-2 py-1 rounded-md text-xs font-bold text-gray-700 shadow-sm">
-                                    {course.price === 0 ? 'Free' : `$${course.price}`}
+                                    {course.price === 0 ? 'Free' : `₹${course.price}`}
                                 </span>
                             </div>
                         </div>
@@ -281,7 +299,7 @@ const TeacherDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Total Revenue</h3>
-                    <p className="text-3xl font-bold text-gray-800">${stats.totalRevenue.toFixed(2)}</p>
+                    <p className="text-3xl font-bold text-gray-800">₹{stats.totalRevenue.toFixed(2)}</p>
                     <span className="text-xs text-green-600 font-medium">Lifetime revenue</span>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -292,9 +310,14 @@ const TeacherDashboard = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Avg. Course Rating</h3>
                     <p className="text-3xl font-bold text-gray-800">
-                        {(courses.reduce((acc, curr) => acc + (curr.averageRating || 0), 0) / (courses.length || 1)).toFixed(1)}
+                        {(() => {
+                            const ratedCourses = courses.filter(c => (c.totalReviews || 0) > 0);
+                            return ratedCourses.length > 0
+                                ? (ratedCourses.reduce((acc, curr) => acc + (curr.averageRating || 0), 0) / ratedCourses.length).toFixed(1)
+                                : "N/A";
+                        })()}
                     </p>
-                    <span className="text-xs text-gray-500 font-medium">Average across courses</span>
+                    <span className="text-xs text-gray-500 font-medium">Average of rated courses</span>
                 </div>
             </div>
 
@@ -349,7 +372,7 @@ const TeacherDashboard = () => {
                                         <td className="px-6 py-4 font-medium text-gray-900">{course.title}</td>
                                         <td className="px-6 py-4">{count}</td>
                                         <td className="px-6 py-4 font-medium text-green-600">
-                                            ${(course.price * count).toFixed(2)}
+                                            ₹{(course.price * count).toFixed(2)}
                                         </td>
                                     </tr>
                                 )

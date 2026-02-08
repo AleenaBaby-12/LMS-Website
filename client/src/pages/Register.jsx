@@ -58,8 +58,14 @@ const Register = () => {
 
     const validateForm = () => {
         // Required fields check - Common
-        if (!name || !email || !password || !phone || !country || !bio) {
-            setError('Please fill in all required fields (Name, Email, Password, Phone, Country, Bio)');
+        if (!name || !email || !password || !phone || !country) {
+            setError('Please fill in Name, Email, Password, Phone, and Country');
+            return false;
+        }
+
+        // Bio is required for teachers and admins, optional for students
+        if (role !== 'student' && !bio) {
+            setError('Please provide a Bio (Tell us about your teaching experience)');
             return false;
         }
 
@@ -84,14 +90,14 @@ const Register = () => {
 
         // Teacher specific validation
         if (role === 'teacher') {
-            if (!professionalTitle || !organization || !website || !linkedIn || !qualifications) {
-                setError('Please fill in all instructor details');
+            if (!professionalTitle || !organization || !linkedIn || !qualifications) {
+                setError('Please fill in all instructor details (Title, Organization, LinkedIn, Qualifications)');
                 return false;
             }
 
             // URL validation
             const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-            if (!urlRegex.test(website)) {
+            if (website && !urlRegex.test(website)) {
                 setError('Please enter a valid website URL');
                 return false;
             }
@@ -269,16 +275,15 @@ const Register = () => {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                        Bio <span className="text-red-500">*</span>
+                                        Bio {role !== 'student' ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal">(Optional)</span>}
                                     </label>
                                     <textarea
-                                        placeholder={role === 'teacher' ? "Teaching exp..." : "About you..."}
+                                        placeholder={role === 'teacher' ? "Teaching experience, expertise..." : "Short intro about yourself..."}
                                         className="input w-full resize-none py-1 min-h-[42px]"
                                         rows="1"
                                         value={bio}
                                         onChange={(e) => setBio(e.target.value)}
                                         maxLength="500"
-                                        required
                                         style={{ height: '42px' }}
                                     />
                                 </div>
@@ -324,7 +329,7 @@ const Register = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                            Website <span className="text-red-500">*</span>
+                                            Website <span className="text-gray-400 font-normal">(Optional)</span>
                                         </label>
                                         <input
                                             type="url"
@@ -332,7 +337,6 @@ const Register = () => {
                                             className="input w-full py-2"
                                             value={website}
                                             onChange={(e) => setWebsite(e.target.value)}
-                                            required
                                         />
                                     </div>
                                     <div>

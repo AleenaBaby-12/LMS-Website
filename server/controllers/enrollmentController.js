@@ -1,5 +1,6 @@
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
+const { createNotification } = require('./notificationController');
 
 // @desc    Enroll in a course
 // @route   POST /api/enrollments
@@ -30,6 +31,40 @@ const enrollCourse = async (req, res) => {
         // Add student to course's student list
         course.studentsEnrolled.push(req.user._id);
         await course.save();
+
+        // Notify Student
+        await createNotification({
+            recipient: req.user._id,
+            message: `You have successfully enrolled in ${course.title}`,
+            type: 'success',
+            relatedId: course._id,
+            onModel: 'Course'
+        });
+
+        // Notify Instructor
+        console.log('--- ENROLLMENT DEBUG ---');
+        console.log('Course ID:', course._id);
+        console.log('Course Title:', course.title);
+        console.log('Course Instructor Field:', course.instructor);
+
+        if (course.instructor) {
+            console.log('Sending notification to instructor:', course.instructor);
+            try {
+                const notif = await createNotification({
+                    recipient: course.instructor,
+                    message: `New student enrolled in ${course.title}: ${req.user.name}`,
+                    type: 'info',
+                    relatedId: course._id,
+                    onModel: 'Course'
+                });
+                console.log('Notification created:', notif);
+            } catch (err) {
+                console.error('Failed to create instructor notification:', err);
+            }
+        } else {
+            console.error('CRITICAL: Course has no instructor!');
+        }
+        console.log('--- END ENROLLMENT DEBUG ---');
 
         res.status(201).json(enrollment);
     } catch (error) {

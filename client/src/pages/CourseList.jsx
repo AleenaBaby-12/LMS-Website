@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import StarRating from '../components/StarRating';
 
 const CourseList = () => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchParams] = useSearchParams();
+    const searchQuery = searchParams.get('search') || '';
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -21,13 +23,20 @@ const CourseList = () => {
         fetchCourses();
     }, []);
 
+    const filteredCourses = courses.filter(course =>
+        course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        course.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     if (loading) return <div className="text-center mt-10">Loading courses...</div>;
 
     return (
         <div className="max-w-7xl mx-auto mt-8 px-8">
-            <h2 className="text-2xl font-bold mb-6">Available Courses</h2>
+            <h2 className="text-2xl font-bold mb-6">
+                {searchQuery ? `Search Results for "${searchQuery}"` : 'Available Courses'}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {courses.map(course => (
+                {filteredCourses.map(course => (
                     <div key={course._id} className="card flex flex-col h-full">
                         <div className="flex-1">
                             {course.thumbnail ? (
@@ -57,7 +66,7 @@ const CourseList = () => {
                                     <span className="font-medium">Instructor:</span> {course.instructor.name}
                                 </p>
                                 <p className="text-sm font-semibold text-green-600">
-                                    {course.price === 0 ? 'Free' : `$${course.price}`}
+                                    {course.price === 0 ? 'Free' : `₹${course.price}`}
                                 </p>
                             </div>
                         </div>
@@ -67,8 +76,13 @@ const CourseList = () => {
                     </div>
                 ))}
             </div>
-            {courses.length === 0 && (
-                <p className="text-center text-gray-500">No courses available at the moment.</p>
+            {filteredCourses.length === 0 && (
+                <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">No courses found matching your search.</p>
+                    {searchQuery && (
+                        <Link to="/courses" className="text-blue-600 hover:underline mt-2 inline-block">View all courses</Link>
+                    )}
+                </div>
             )}
         </div>
     );

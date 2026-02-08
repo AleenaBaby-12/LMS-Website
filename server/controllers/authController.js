@@ -80,11 +80,15 @@ const loginUser = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (user && (await user.matchPassword(password))) {
+            if (user.isBlocked) {
+                return res.status(403).json({ message: 'Your account has been blocked. Please contact support.' });
+            }
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                profilePicture: user.profilePicture,
                 token: generateToken(user._id)
             });
         } else {
@@ -99,18 +103,70 @@ const loginUser = async (req, res) => {
 // @route   GET /api/auth/profile
 // @access  Private
 const getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            res.json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                phone: user.phone,
+                bio: user.bio,
+                country: user.country,
+                profilePicture: user.profilePicture,
+                qualifications: user.qualifications,
+                professionalTitle: user.professionalTitle,
+                organization: user.organization,
+                website: user.website,
+                linkedIn: user.linkedIn,
+                createdAt: user.createdAt
+            });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+        user.phone = req.body.phone || user.phone;
+        user.bio = req.body.bio || user.bio;
+        user.country = req.body.country || user.country;
+        user.profilePicture = req.body.profilePicture || user.profilePicture;
+
+        if (req.body.password) {
+            user.password = req.body.password;
+        }
+
+        const updatedUser = await user.save();
+
         res.json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            phone: updatedUser.phone,
+            bio: updatedUser.bio,
+            country: updatedUser.country,
+            profilePicture: updatedUser.profilePicture,
+            createdAt: updatedUser.createdAt,
+            token: generateToken(updatedUser._id)
         });
     } else {
         res.status(404).json({ message: 'User not found' });
     }
 };
 
-module.exports = { registerUser, loginUser, getUserProfile };
+module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile };

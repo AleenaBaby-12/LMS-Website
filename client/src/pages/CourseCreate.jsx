@@ -76,7 +76,7 @@ const CourseCreate = () => {
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="text-sm text-gray-500 mb-1">Price ($)</label>
+                        <label className="text-sm text-gray-500 mb-1">Price (₹)</label>
                         <input
                             type="number"
                             className="input"

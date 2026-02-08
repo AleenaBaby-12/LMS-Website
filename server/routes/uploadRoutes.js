@@ -5,6 +5,6 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 
 
 router.post('/', protect, authorize('teacher', 'admin'), upload.single('file'), uploadFile);
-router.post('/profile-picture', protect, upload.single('file'), uploadFile); // Profile picture upload for all users
+router.post('/profile-picture', upload.single('file'), uploadFile); // Made public to allow registration-time uploads
 
 module.exports = router;

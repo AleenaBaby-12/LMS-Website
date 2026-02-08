@@ -58,6 +58,10 @@ const userSchema = new mongoose.Schema({
     linkedIn: {
         type: String,
         trim: true
+    },
+    isBlocked: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

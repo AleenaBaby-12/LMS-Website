@@ -30,7 +30,14 @@ const Sidebar = () => {
         { path: '/progress', label: 'My Progress', icon: BarChart2 },
     ];
 
-    const navItems = user?.role === 'student' ? studentLinks : teacherLinks;
+    const adminLinks = [
+        { path: '/admin/dashboard', label: 'Admin Panel', icon: LayoutDashboard },
+        { path: '/admin/users', label: 'Manage Users', icon: Users },
+        { path: '/courses', label: 'Manage Courses', icon: BookOpen },
+    ];
+
+    const navItems = user?.role === 'admin' ? adminLinks :
+        user?.role === 'teacher' ? teacherLinks : studentLinks;
 
     const isActive = (path) => {
         if (path.includes('?')) {
@@ -46,7 +53,8 @@ const Sidebar = () => {
                     <GraduationCap className="text-white" size={20} />
                 </div>
                 <h1 className="font-bold text-xl text-gray-900 tracking-tight">
-                    {user?.role === 'student' ? 'LMS Student' : 'LMS Teacher'}
+                    {user?.role === 'admin' ? 'LMS Admin' :
+                        user?.role === 'teacher' ? 'LMS Teacher' : 'LMS Student'}
                 </h1>
             </div>
 

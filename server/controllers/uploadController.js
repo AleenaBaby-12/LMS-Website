@@ -29,8 +29,8 @@ const uploadFile = (req, res) => {
         return res.status(400).send('No file uploaded');
     }
     console.log('File Uploaded to Cloudinary:', req.file.path);
-    // Cloudinary returns the URL in req.file.path
-    res.send(req.file.path);
+    // Return an object with url property for frontend compatibility
+    res.json({ url: req.file.path });
 };
 
 module.exports = {

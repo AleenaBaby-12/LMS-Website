@@ -5,8 +5,8 @@ const Course = require('../models/Course');
 // @access  Public
 const getCourses = async (req, res) => {
     try {
-        // Filter by published unless admin query is present
-        const query = req.query.admin === 'true' ? {} : { isPublished: true };
+        // Filter by published and approved unless admin query is present
+        const query = req.query.admin === 'true' ? {} : { isPublished: true, approvalStatus: 'approved' };
         const courses = await Course.find(query).populate('instructor', 'name');
         res.json(courses);
     } catch (error) {
@@ -62,7 +62,8 @@ const createCourse = async (req, res) => {
             thumbnail,
             price,
             instructor: req.user._id,
-            modules: []
+            modules: [],
+            approvalStatus: req.user.role === 'admin' ? 'approved' : 'pending'
         });
 
         const createdCourse = await course.save();

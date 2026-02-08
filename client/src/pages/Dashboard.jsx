@@ -1,9 +1,14 @@
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import TeacherDashboard from './TeacherDashboard';
 import StudentDashboard from './StudentDashboard';
 
 const Dashboard = () => {
     const { user } = useAuth();
+
+    if (user?.role === 'admin') {
+        return <Navigate to="/admin/dashboard" />;
+    }
 
     if (user?.role === 'teacher') {
         return <TeacherDashboard />;

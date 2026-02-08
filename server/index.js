@@ -23,6 +23,12 @@ app.use(cors({
     credentials: true
 }));
 
+// Request Logger
+app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.url}`);
+    next();
+});
+
 // Serve static files from uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -58,6 +64,8 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Start Server
 connectDB().then(() => {
