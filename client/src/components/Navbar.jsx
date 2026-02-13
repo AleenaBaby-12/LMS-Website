@@ -23,10 +23,8 @@ const Navbar = () => {
             </Link>
 
             <div className="hidden md:flex items-center gap-6">
-                <Link to="/" className="text-gray-600 hover:text-blue-600 font-medium">Home</Link>
-                <a href="/#features" className="text-gray-600 hover:text-blue-600 font-medium">Features</a>
-                <a href="/#about" className="text-gray-600 hover:text-blue-600 font-medium">About</a>
-                <a href="#" className="text-gray-600 hover:text-blue-600 font-medium">Contact</a>
+                <Link to="/courses" className="text-gray-600 hover:text-blue-600 font-medium">Courses</Link>
+                <Link to="/leaderboard" className="text-gray-600 hover:text-blue-600 font-medium">Leaderboard</Link>
                 <div className="h-6 w-px bg-gray-300 mx-2"></div>
                 {user ? (
                     <>
@@ -40,6 +38,7 @@ const Navbar = () => {
                             )}
                             <span className="text-gray-500 font-medium">Welcome, {user.name}</span>
                         </div>
+                        {user.role === 'student' && <Link to="/achievements" className="text-gray-600 hover:text-blue-600 font-medium">Achievements</Link>}
                         <Link to="/dashboard" className="btn btn-outline">Dashboard</Link>
                         <button onClick={handleLogout} className="btn btn-primary">
                             <LogOut size={18} /> Logout

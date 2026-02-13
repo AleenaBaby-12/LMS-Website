@@ -237,7 +237,7 @@ const getAllCourses = async (req, res) => {
 const getSalesHistory = async (req, res) => {
     try {
         const enrollments = await Enrollment.find({})
-            .populate('user', 'name email')
+            .populate('student', 'name email')
             .populate({
                 path: 'course',
                 populate: { path: 'instructor', select: 'name' }

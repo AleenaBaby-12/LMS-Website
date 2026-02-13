@@ -66,6 +66,12 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/gamification', require('./routes/gamificationRoutes'));
+app.use('/api/career', require('./routes/careerRoutes'));
+app.use('/api/mentors', require('./routes/mentorRoutes'));
+app.use('/api/mentor-connections', require('./routes/mentorConnectionRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
+
 
 // Start Server
 connectDB().then(() => {

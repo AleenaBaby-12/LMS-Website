@@ -43,7 +43,11 @@ const courseSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'approved'
-    }
+    },
+    careerPathTags: [{
+        type: String, // e.g., "Frontend", "Backend", "Data Science"
+        trim: true
+    }]
 }, { timestamps: true });
 
 const Course = mongoose.model('Course', courseSchema);

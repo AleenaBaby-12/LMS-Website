@@ -146,6 +146,15 @@ const updateUserProfile = async (req, res) => {
         user.country = req.body.country || user.country;
         user.profilePicture = req.body.profilePicture || user.profilePicture;
 
+        // Instructor/Mentor fields
+        if (user.role === 'teacher' || req.body.role === 'teacher') {
+            user.professionalTitle = req.body.professionalTitle || user.professionalTitle;
+            user.organization = req.body.organization || user.organization;
+            user.qualifications = req.body.qualifications || user.qualifications;
+            user.website = req.body.website || user.website;
+            user.linkedIn = req.body.linkedIn || user.linkedIn;
+        }
+
         if (req.body.password) {
             user.password = req.body.password;
         }

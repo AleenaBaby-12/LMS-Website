@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, Lock, PlayCircle, FileText, Trash2, Save, X, Star, Edit2 } from 'lucide-react';
+import { CheckCircle, Lock, PlayCircle, FileText, Trash2, Save, X, Star, Edit2, AlertCircle } from 'lucide-react';
 import StarRating from '../components/StarRating';
 
 const CourseDetail = () => {
@@ -221,8 +221,8 @@ const CourseDetail = () => {
             const { data } = await api.post('/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            // Cloudinary returns full URL string in data
-            setNewLesson(prev => ({ ...prev, [type]: data }));
+            // Cloudinary returns full URL string in data.url
+            setNewLesson(prev => ({ ...prev, [type]: data.url }));
         } catch (error) {
             console.error('Upload failed:', error);
             alert('Upload failed');
@@ -260,6 +260,23 @@ const CourseDetail = () => {
 
     return (
         <div className="max-w-7xl mx-auto mt-8 px-8 pb-20 relative">
+            {/* Admin Approval Banner for Instructors & Admins */}
+            {(isInstructor || (user && user.role === 'admin')) && course.isPublished && course.approvalStatus !== 'approved' && (
+                <div className={`mb-6 p-4 rounded-lg flex items-center justify-between shadow-sm border ${course.approvalStatus === 'rejected' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-orange-50 border-orange-200 text-orange-700'}`}>
+                    <div className="flex items-center gap-3">
+                        <AlertCircle size={24} />
+                        <div>
+                            <p className="font-bold">Course {course.approvalStatus === 'rejected' ? 'Rejected' : 'Pending Approval'}</p>
+                            <p className="text-sm">
+                                {course.approvalStatus === 'rejected'
+                                    ? 'Admin has rejected this course. Please review the content and contact support.'
+                                    : 'This course is published but waiting for admin approval. It is not yet visible to students.'}
+                            </p>
+                        </div>
+                    </div>
+                    <span className="text-xs font-bold uppercase px-2 py-1 bg-white/50 rounded">{course.approvalStatus || 'pending'}</span>
+                </div>
+            )}
             {/* Video Modal */}
             {selectedVideo && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setSelectedVideo(null)}>

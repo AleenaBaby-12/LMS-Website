@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard,
@@ -7,17 +9,39 @@ import {
     BarChart2,
     LogOut,
     GraduationCap,
-    FileText
+    FileText,
+    Trophy,
+    Award,
+    Briefcase
 } from 'lucide-react';
 
 const Sidebar = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
+    const [unreadMessages, setUnreadMessages] = useState(0);
+
+    const fetchUnreadCount = async () => {
+        try {
+            const { data } = await api.get('/messages/unread/count');
+            setUnreadMessages(data.count);
+        } catch (error) {
+            console.error('Error fetching sidebar unread count:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            fetchUnreadCount();
+            const interval = setInterval(fetchUnreadCount, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [user]);
 
     const teacherLinks = [
         { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { path: '/dashboard?view=courses', label: 'My Courses', icon: BookOpen },
         { path: '/dashboard?view=students', label: 'Students', icon: Users },
+        { path: '/mentor-connections', label: 'Mentorship', icon: GraduationCap },
         { path: '/assignments', label: 'Assignments', icon: FileText },
         { path: '/dashboard?view=analytics', label: 'Analytics', icon: BarChart2 },
     ];
@@ -26,8 +50,11 @@ const Sidebar = () => {
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/courses', label: 'Browse Courses', icon: BookOpen },
         { path: '/my-learning', label: 'My Learning', icon: GraduationCap },
+        { path: '/mentor-connections', label: 'Mentorship', icon: Users },
         { path: '/assignments', label: 'Assignments', icon: FileText },
-        { path: '/progress', label: 'My Progress', icon: BarChart2 },
+        { path: '/achievements', label: 'Achievements', icon: Award },
+        { path: '/career', label: 'Career', icon: Briefcase },
+        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     ];
 
     const adminLinks = [
@@ -69,7 +96,12 @@ const Sidebar = () => {
                             }`}
                     >
                         <item.icon size={20} />
-                        {item.label}
+                        <span className="flex-1">{item.label}</span>
+                        {item.label === 'Mentorship' && unreadMessages > 0 && (
+                            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+                                {unreadMessages}
+                            </span>
+                        )}
                     </Link>
                 ))}
             </nav>

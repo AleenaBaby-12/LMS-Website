@@ -1,6 +1,7 @@
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const { createNotification } = require('./notificationController');
+const { issueBadge, issueCertificate } = require('./gamificationController');
 
 // @desc    Enroll in a course
 // @route   POST /api/enrollments
@@ -165,7 +166,20 @@ const toggleLessonComplete = async (req, res) => {
         }
 
         // Mark as completed if 100%
-        enrollment.completed = enrollment.progress === 100;
+        if (enrollment.progress === 100 && !enrollment.completed) {
+            enrollment.completed = true;
+            // Issue Certificate and "Course Finisher" badge
+            await issueCertificate(req.user._id, courseId);
+
+            await createNotification({
+                recipient: req.user._id,
+                message: `Congratulations! You've completed ${enrollment.course.title} and earned a certificate!`,
+                type: 'success',
+                relatedId: courseId,
+                onModel: 'Course'
+            });
+        }
+
 
         // Update last accessed
         enrollment.lastAccessed = new Date();

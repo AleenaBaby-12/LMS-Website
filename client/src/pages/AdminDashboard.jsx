@@ -6,8 +6,9 @@ import {
     CheckCircle, XCircle, Megaphone, TrendingUp,
     MoreVertical, UserCheck, UserX, AlertCircle,
     LayoutDashboard, Send, DollarSign, ShieldAlert,
-    Settings as SettingsIcon, Search, Key, RefreshCw, FileText
+    Settings as SettingsIcon, Search, Key, RefreshCw, FileText, Eye
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer, Cell
@@ -322,6 +323,12 @@ const AdminDashboard = () => {
                                     Reject
                                 </button>
                             </div>
+                            <Link
+                                to={`/courses/${course._id}`}
+                                className="mt-3 flex items-center justify-center gap-2 w-full py-2 border border-blue-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 transition-colors"
+                            >
+                                <Eye size={14} /> View Details & Curriculum
+                            </Link>
                         </div>
                     ))}
                 </div>
@@ -401,8 +408,8 @@ const AdminDashboard = () => {
                         {salesHistory.map((sale) => (
                             <tr key={sale._id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="font-semibold text-gray-900">{sale.user?.name || 'Unknown'}</div>
-                                    <div className="text-xs text-gray-500">{sale.user?.email}</div>
+                                    <div className="font-semibold text-gray-900">{sale.student?.name || 'Unknown'}</div>
+                                    <div className="text-xs text-gray-500">{sale.student?.email}</div>
                                 </td>
                                 <td className="px-6 py-4 font-medium text-gray-800">
                                     {sale.course?.title || 'Deleted Course'}

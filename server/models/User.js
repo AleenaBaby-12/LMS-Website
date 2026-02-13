@@ -62,6 +62,24 @@ const userSchema = new mongoose.Schema({
     isBlocked: {
         type: Boolean,
         default: false
+    },
+    // Career Guidance Fields
+    careerGoal: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CareerPath',
+        default: null
+    },
+    currentSkills: [{
+        type: String,
+        trim: true
+    }],
+    isMentor: {
+        type: Boolean,
+        default: false
+    },
+    mentorBio: {
+        type: String,
+        maxlength: 300
     }
 }, { timestamps: true });
 

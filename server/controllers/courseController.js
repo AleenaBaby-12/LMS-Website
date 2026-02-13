@@ -55,14 +55,14 @@ const createCourse = async (req, res) => {
         console.log('Create Course Request:', req.body);
         console.log('User creating course:', req.user._id);
 
-        const { title, description, thumbnail, price } = req.body;
+        const { title, description, thumbnail, price, modules } = req.body;
         const course = new Course({
             title,
             description,
             thumbnail,
             price,
             instructor: req.user._id,
-            modules: [],
+            modules: modules || [],
             approvalStatus: req.user.role === 'admin' ? 'approved' : 'pending'
         });
 

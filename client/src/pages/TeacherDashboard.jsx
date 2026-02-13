@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopHeader from '../components/TopHeader';
 import api from '../services/api';
-import { Plus, Trash2, Users, BookOpen, Clock, TrendingUp, PlusCircle, FileText, IndianRupee } from 'lucide-react';
+import { Plus, Trash2, Users, BookOpen, Clock, TrendingUp, PlusCircle, FileText, IndianRupee, Edit2 } from 'lucide-react';
 import {
     LineChart,
     Line,
@@ -211,9 +211,14 @@ const TeacherDashboard = () => {
                                         <h4 className="font-semibold text-gray-800 text-sm truncate">{course.title}</h4>
                                         <p className="text-xs text-gray-500">{course.studentsEnrolled?.length || 0} students</p>
                                     </div>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${course.isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                        {course.isPublished ? 'Published' : 'Draft'}
-                                    </span>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${course.isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                            {course.isPublished ? 'Published' : 'Draft'}
+                                        </span>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tight ${course.approvalStatus === 'approved' ? 'bg-blue-100 text-blue-700' : course.approvalStatus === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                                            {course.approvalStatus || 'pending'}
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -259,17 +264,40 @@ const TeacherDashboard = () => {
                             </div>
                         </div>
                         <div className="p-5">
-                            <div className="flex justify-between items-start mb-2">
-                                <span
-                                    className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide cursor-pointer ${course.isPublished ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}
-                                    onClick={() => handlePublish(course._id, course.isPublished)}
-                                >
-                                    {course.isPublished ? 'Published' : 'Draft'}
-                                </span>
-                                <button onClick={(e) => handleDelete(e, course._id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                                    <Trash2 size={16} />
-                                </button>
+                            <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                                <div className="flex gap-2">
+                                    <span
+                                        className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide cursor-pointer ${course.isPublished ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}
+                                        onClick={() => handlePublish(course._id, course.isPublished)}
+                                        title={course.isPublished ? "Click to unpublish" : "Click to publish"}
+                                    >
+                                        {course.isPublished ? 'Published' : 'Draft'}
+                                    </span>
+                                    <span
+                                        className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide ${course.approvalStatus === 'approved' ? 'bg-blue-50 text-blue-600' : course.approvalStatus === 'rejected' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}
+                                        title={course.approvalStatus === 'approved' ? "Visible to students" : "Waiting for admin approval"}
+                                    >
+                                        {course.approvalStatus || 'pending'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Link
+                                        to={`/courses/edit/${course._id}`}
+                                        className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                                        title="Edit Course"
+                                    >
+                                        <Edit2 size={16} />
+                                    </Link>
+                                    <button onClick={(e) => handleDelete(e, course._id)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
+                            {course.isPublished && course.approvalStatus !== 'approved' && (
+                                <p className="text-[10px] text-orange-600 font-medium mb-2 italic">
+                                    * Published but waiting for admin approval to be visible to students.
+                                </p>
+                            )}
                             <h3 className="font-bold text-gray-900 mb-2 line-clamp-1">{course.title}</h3>
                             <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">{course.description}</p>
 

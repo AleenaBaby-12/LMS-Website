@@ -3,6 +3,7 @@ const Submission = require('../models/Submission');
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const { createNotification } = require('./notificationController');
+const { issueBadge } = require('./gamificationController');
 
 // @desc    Create new assignment
 // @route   POST /api/assignments
@@ -257,10 +258,16 @@ exports.gradeSubmission = async (req, res) => {
         submission.status = 'graded';
         await submission.save();
 
+        // Check for high score badge (90%+)
+        const percentage = (grade / submission.assignment.points) * 100;
+        if (percentage >= 90) {
+            await issueBadge(submission.student, 'score', { courseId: submission.assignment.course });
+        }
+
         // Notify Student
         await createNotification({
             recipient: submission.student._id || submission.student,
-            message: `Your assignment "${submission.assignment.title}" has been graded`,
+            message: `Your assignment "${submission.assignment.title}" has been graded. Score: ${grade}/${submission.assignment.points}${percentage >= 90 ? ' - You earned a High Achiever badge!' : ''}`,
             type: 'success',
             relatedId: submission.assignment._id,
             onModel: 'Assignment'

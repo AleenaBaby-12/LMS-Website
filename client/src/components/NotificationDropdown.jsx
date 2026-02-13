@@ -37,7 +37,9 @@ const NotificationDropdown = ({ notifications, onMarkAsRead, onMarkAllAsRead, on
         } else {
             // Fallback navigation based on message content
             const msg = notification.message.toLowerCase();
-            if (msg.includes('assignment')) {
+            if (msg.includes('mentor') || msg.includes('mentee') || msg.includes('connection')) {
+                navigate('/mentor-connections');
+            } else if (msg.includes('assignment')) {
                 navigate('/assignments');
             } else if (msg.includes('course') || msg.includes('enroll')) {
                 navigate('/my-courses'); // or /dashboard for teacher

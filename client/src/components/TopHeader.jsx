@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Search, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react';
+import { Bell, Search, User, LogOut, LayoutDashboard, ChevronDown, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
@@ -12,6 +12,7 @@ const TopHeader = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadMessages, setUnreadMessages] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const bellRef = useRef(null);
     const profileRef = useRef(null);
@@ -23,18 +24,22 @@ const TopHeader = () => {
 
     const fetchNotifications = async () => {
         try {
-            const { data } = await api.get('/notifications');
-            setNotifications(data);
-            setUnreadCount(data.filter(n => !n.isRead).length);
+            const [notifRes, msgRes] = await Promise.all([
+                api.get('/notifications'),
+                api.get('/messages/unread/count')
+            ]);
+            setNotifications(notifRes.data);
+            setUnreadCount(notifRes.data.filter(n => !n.isRead).length);
+            setUnreadMessages(msgRes.data.count);
         } catch (error) {
-            console.error('Failed to fetch notifications', error);
+            console.error('Failed to fetch notifications or unread counts', error);
         }
     };
 
     useEffect(() => {
         fetchNotifications();
-        // Optional: Poll for notifications every minute
-        const interval = setInterval(fetchNotifications, 60000);
+        // Poll for notifications and messages every 10 seconds for better responsiveness
+        const interval = setInterval(fetchNotifications, 10000);
         return () => clearInterval(interval);
     }, []);
 
@@ -120,6 +125,19 @@ const TopHeader = () => {
             </div>
 
             <div className="flex items-center gap-4">
+                <button
+                    onClick={() => navigate('/mentor-connections')}
+                    className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+                    title="Messages"
+                >
+                    <MessageSquare size={20} />
+                    {unreadMessages > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1 rounded-full min-w-[16px] h-4 flex items-center justify-center border-2 border-white">
+                            {unreadMessages}
+                        </span>
+                    )}
+                </button>
+
                 <div className="relative">
                     <button
                         ref={bellRef}
